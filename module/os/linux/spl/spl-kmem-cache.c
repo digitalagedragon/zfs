@@ -1075,7 +1075,10 @@ __spl_cache_grow(spl_kmem_cache_t *skc, int flags)
 	fstrans_cookie_t cookie = spl_fstrans_mark();
 	sks = spl_slab_alloc(skc, flags);
 	spl_fstrans_unmark(cookie);
-
+	
+	unsigned long eflags;
+	local_irq_save(eflags);
+	
 	spin_lock(&skc->skc_lock);
 	if (sks) {
 		skc->skc_slab_total++;
@@ -1087,7 +1090,8 @@ __spl_cache_grow(spl_kmem_cache_t *skc, int flags)
 		smp_mb__after_atomic();
 	}
 	spin_unlock(&skc->skc_lock);
-
+	local_irq_restore(eflags);
+	
 	return (sks == NULL ? -ENOMEM : 0);
 }
 
